@@ -7,24 +7,20 @@ certificationLevel = 2;
 longDescription = "This script will output a Heidenhain gcode (.h) file to configure all the tools in the setup on a Heidenhain machine.";
 
 extension = "h";
-// using user code page
+if (getCodePage() == 932) { // shift-jis is not supported
+  setCodePage("ascii");
+} else {
+  setCodePage("ansi"); // setCodePage("utf-8");
+}
 
 capabilities = CAPABILITY_INTERMEDIATE;
-
-allowMachineChangeOnSection = true;
-allowHelicalMoves = true;
-allowSpiralMoves = true;
-allowedCircularPlanes = undefined; // allow any circular motion
-maximumCircularSweep = toRad(1000000);
-minimumCircularRadius = spatial(0.001, MM);
-maximumCircularRadius = spatial(1000000, MM);
 
 // user-defined properties
 properties = {
   magazineLoad: true, // displays parameters
-  spindleNoseOffset: 0, // mm
-  toolsetterRadialOffsetBuffer: 0.5, // mm
-  toolsetterAxialOffsetBuffer: 0.5, // mm
+  spindleNoseOffset: spatial(0, MM), // mm
+  toolsetterRadialOffsetBuffer: spatial(0.5, MM), // mm
+  toolsetterAxialOffsetBuffer: spatial(0.5, MM), // mm
 };
 
 // user-defined property definitions
@@ -35,7 +31,7 @@ propertyDefinitions = {
   toolsetterAxialOffsetBuffer: { title: "Toolsetter Axial Offset Buffer", description: "The addidional offset above of the tool tip radius to measure the tool at", type: "spatial" }
 };
 
-var spatialFormat = createFormat({ decimals: 6 });
+var spatialFormat = createFormat({decimals:(unit == MM ? 5 : 6)});
 var angularFormat = createFormat({ decimals: 6, scale: DEG });
 var rpmFormat = createFormat({ decimals: 6 });
 var otherFormat = createFormat({ decimals: 6 });
@@ -93,7 +89,13 @@ function calculateOffset(tool) {
       typ = 72; // There might be more codes for diffrent kinds of taps (LH, RH, single point, and ect) on the Heidenhain side and the Fusion side
       break;
     }
-  return { typ: typ, radialOddset: radialOddset, axialOffset: axialOffset };
+  if ((radialOddset > (tool.diameter / 2.0)) || (radialOddset < 0.0) || (axialOffset > tool.fluteLength) || (axialOffset < 0.0)) {
+    var message = "Toolsetter offset is outside of the tool tip radius for tool " + tool.number + "\nNeither offser can be less than 0 or greater than the tool radius or LOC.\n";
+    message += "Toolsetter radial offset buffer: " + spatialFormat.format(properties.toolsetterRadialOffsetBuffer) + "mm Tool Radius: " + spatialFormat.format(tool.diameter / 2.0) + "mm\n";
+    message += "Toolsetter axial offset buffer: " + spatialFormat.format(properties.toolsetterAxialOffsetBuffer) + "mm LOC: " + spatialFormat.format(tool.fluteLength) + "mm\n";
+    error(localize(message));
+  }
+  return { typ: typ, radialOddset: spatialFormat.format(radialOddset), axialOffset: spatialFormat.format(axialOffset) };
 }
 
 function onSection() {
@@ -150,3 +152,6 @@ function onSection() {
     writeln(";");
   }
 }
+
+function onRapid5D(_x, _y, _z, _a, _b, _c) { }
+function onLinear5D(_x, _y, _z, _a, _b, _c, feed, feedMode) { }

@@ -73,3 +73,5 @@ function onSection() {
   
 }
 
+function onRapid5D(_x, _y, _z, _a, _b, _c) { }
+function onLinear5D(_x, _y, _z, _a, _b, _c, feed, feedMode) { }
