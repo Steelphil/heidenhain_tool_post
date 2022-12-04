@@ -148,9 +148,5 @@ function onSection() {
     writeln(tablePath + "PITCH\" = QS17");
     writeln(tablePath + "PLC-VAL\" = QS18");
     writeln(";");
-
-
   }
-  
 }
-
