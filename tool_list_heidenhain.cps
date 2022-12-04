@@ -89,22 +89,22 @@ function onSection() {
     writeln("QS22 = \"user\"; PROGRAMMER");
     writeln("QS23 = \"Program name.h\"; NC-PGM");
     writeln(";");
-    tablePath = "\\TABLE\\TOOL\\T\\" + tool.number + "\\";
-    writeln("DATA WRITE \"" + tablePath + "NAME\" = QS1");
-    writeln("DATA WRITE \"" + tablePath + "DOC\" = QS2");
-    writeln("DATA WRITE \"" + tablePath + "L\" = QS4");
-    writeln("DATA WRITE \"" + tablePath + "R\" = QS5");
-    writeln("DATA WRITE \"" + tablePath + "R2\" = QS6");
-    writeln("DATA WRITE \"" + tablePath + "TIME2\" = QS7");
-    writeln("DATA WRITE \"" + tablePath + "TYP\" = QS8");
-    writeln("DATA WRITE \"" + tablePath + "LCUTS\" = QS9");
-    writeln("DATA WRITE \"" + tablePath + "LTOL\" = QS11");
-    writeln("DATA WRITE \"" + tablePath + "RTOL\" = QS12");
-    writeln("DATA WRITE \"" + tablePath + "LBREAK\" = QS13");
-    writeln("DATA WRITE \"" + tablePath + "RBREAK\" = QS14");
-    writeln("DATA WRITE \"" + tablePath + "T-ANGLE\" = QS16");
-    writeln("DATA WRITE \"" + tablePath + "PITCH\" = QS17");
-    writeln("DATA WRITE \"" + tablePath + "PLC-VAL\" = QS18");
+    tablePath = "DATA WRITE \"\\TABLE\\TOOL\\T\\" + tool.number + "\\";
+    writeln(tablePath + "NAME\" = QS1");
+    writeln(tablePath + "DOC\" = QS2");
+    writeln(tablePath + "L\" = QS4");
+    writeln(tablePath + "R\" = QS5");
+    writeln(tablePath + "R2\" = QS6");
+    writeln(tablePath + "TIME2\" = QS7");
+    writeln(tablePath + "TYP\" = QS8");
+    writeln(tablePath + "LCUTS\" = QS9");
+    writeln(tablePath + "LTOL\" = QS11");
+    writeln(tablePath + "RTOL\" = QS12");
+    writeln(tablePath + "LBREAK\" = QS13");
+    writeln(tablePath + "RBREAK\" = QS14");
+    writeln(tablePath + "T-ANGLE\" = QS16");
+    writeln(tablePath + "PITCH\" = QS17");
+    writeln(tablePath + "PLC-VAL\" = QS18");
     writeln(";");
 
 
