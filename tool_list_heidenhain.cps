@@ -18,9 +18,10 @@ capabilities = CAPABILITY_INTERMEDIATE;
 // user-defined properties
 properties = {
   magazineLoad: true, // displays parameters
-  spindleNoseOffset: spatial(0, MM), // mm
-  toolsetterRadialOffsetBuffer: spatial(0.5, MM), // mm
-  toolsetterAxialOffsetBuffer: spatial(0.5, MM), // mm
+  spindleNoseOffset: spatial(0, MM),
+  toolsetterRadialOffsetBuffer: spatial(0.5, MM),
+  toolsetterAxialOffsetBuffer: spatial(0.5, MM),
+  minTooltoSet: -1,
 };
 
 // user-defined property definitions
@@ -28,7 +29,8 @@ propertyDefinitions = {
   magazineLoad: { title: "Load Tools into Magazine", description: "If enabled, the PLC expects the tool to be loaded into the magazine", type: "boolean" },
   spindleNoseOffset: { title: "Spindle Nose Offset", description: "Distance between the Fusion total tool length and actual spindle nose, intended to be used if you model your spindle into the toolholder for colission detection", type: "spatial" },
   toolsetterRadialOffsetBuffer: { title: "Toolsetter Radial Offset Buffer", description: "The addidional offset inside of the tool tip radius to measure the tool at", type: "spatial" },
-  toolsetterAxialOffsetBuffer: { title: "Toolsetter Axial Offset Buffer", description: "The addidional offset above of the tool tip radius to measure the tool at", type: "spatial" }
+  toolsetterAxialOffsetBuffer: { title: "Toolsetter Axial Offset Buffer", description: "The addidional offset above of the tool tip radius to measure the tool at", type: "spatial" },
+  minTooltoSet: { title: "Minimum Tool to Set", description: "The minimum tool for the post to try and set, -1 starts at tool 0", type: "integer" },
 };
 
 var spatialFormat = createFormat({decimals:(unit == MM ? 5 : 6)});
@@ -99,7 +101,7 @@ function calculateOffset(tool) {
 }
 
 function onSection() {
-  if (already_recorded_tool.indexOf(ab(tool.toolId)) == -1) { // this is really fucking stupid but the postprocessor system has no .includes() function for arrays
+  if ((already_recorded_tool.indexOf(ab(tool.toolId)) == -1) && (minTooltoSet - 1 < tool.number)) { // this is really fucking stupid but the postprocessor system has no .includes() function for arrays
     already_recorded_tool = already_recorded_tool + ab(tool.toolId);
     
     var offset = calculateOffset(tool);
