@@ -70,17 +70,17 @@ function calculateOffset(tool) {
       axialOffset = 0;
       break;
     case 5: // Straight End Mill
-      typ = 99;
+      typ = 0;
       radialOddset = (tool.diameter / 2.0) - properties.toolsetterRadialOffsetBuffer;
       axialOffset = properties.toolsetterAxialOffsetBuffer;
       break;
     case 6: // Ball End Mill
-      typ = 99; // TODO: is this correct?
+      typ = 22;
       radialOddset = 0;
       axialOffset = properties.toolsetterAxialOffsetBuffer + tool.cornerRadius;
       break;
     case 7: // Bull Nose End Mill
-      typ = 99; // TODO: is this correct?
+      typ = 23;
       radialOddset = (tool.diameter / 2.0) - properties.toolsetterRadialOffsetBuffer - tool.cornerRadius;
       axialOffset = properties.toolsetterAxialOffsetBuffer + tool.cornerRadius;
       break;
@@ -88,7 +88,13 @@ function calculateOffset(tool) {
       typ = 0; // TODO: No idea what this one might be
       break;
     case 15: // Tap
-      typ = 72; // There might be more codes for diffrent kinds of taps (LH, RH, single point, and ect) on the Heidenhain side and the Fusion side
+      typ = 2; // There might be more codes for diffrent kinds of taps (LH, RH, single point, and ect) on the Heidenhain side and the Fusion side
+      break;
+    case 17: // Reamer
+      typ = 3;
+      break;
+    case 27: // Probe
+      typ = 21;
       break;
     }
   if ((radialOddset > (tool.diameter / 2.0)) || (radialOddset < 0.0) || (axialOffset > tool.fluteLength) || (axialOffset < 0.0)) {
@@ -101,7 +107,7 @@ function calculateOffset(tool) {
 }
 
 function onSection() {
-  if ((already_recorded_tool.indexOf(ab(tool.toolId)) == -1) && (minTooltoSet - 1 < tool.number)) { // this is really fucking stupid but the postprocessor system has no .includes() function for arrays
+  if ((already_recorded_tool.indexOf(ab(tool.toolId)) == -1) && (properties.minTooltoSet - 1 < tool.number)) { // this is really fucking stupid but the postprocessor system has no .includes() function for arrays
     already_recorded_tool = already_recorded_tool + ab(tool.toolId);
     
     var offset = calculateOffset(tool);
@@ -157,3 +163,4 @@ function onSection() {
 
 function onRapid5D(_x, _y, _z, _a, _b, _c) { }
 function onLinear5D(_x, _y, _z, _a, _b, _c, feed, feedMode) { }
+function onCycle() { }
