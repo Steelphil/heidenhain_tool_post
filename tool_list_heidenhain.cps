@@ -21,7 +21,7 @@ properties = {
   spindleNoseOffset: spatial(0, MM),
   toolsetterRadialOffsetBuffer: spatial(0.5, MM),
   toolsetterAxialOffsetBuffer: spatial(0.5, MM),
-  minTooltoSet: -1,
+  minTooltoSet: 0,
 };
 
 // user-defined property definitions
@@ -30,7 +30,7 @@ propertyDefinitions = {
   spindleNoseOffset: { title: "Spindle Nose Offset", description: "Distance between the Fusion total tool length and actual spindle nose, intended to be used if you model your spindle into the toolholder for colission detection", type: "spatial" },
   toolsetterRadialOffsetBuffer: { title: "Toolsetter Radial Offset Buffer", description: "The addidional offset inside of the tool tip radius to measure the tool at", type: "spatial" },
   toolsetterAxialOffsetBuffer: { title: "Toolsetter Axial Offset Buffer", description: "The addidional offset above of the tool tip radius to measure the tool at", type: "spatial" },
-  minTooltoSet: { title: "Minimum Tool to Set", description: "The minimum tool for the post to try and set, -1 starts at tool 0", type: "integer" },
+  minTooltoSet: { title: "Minimum Tool to Set", description: "The minimum tool for the post to try and set, starts at tool 0 by default", type: "integer" },
 };
 
 var spatialFormat = createFormat({decimals:(unit == MM ? 5 : 6)});
