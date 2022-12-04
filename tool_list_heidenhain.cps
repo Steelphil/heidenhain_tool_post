@@ -22,11 +22,17 @@ maximumCircularRadius = spatial(1000000, MM);
 // user-defined properties
 properties = {
   magazineLoad: true, // displays parameters
+  spindleNoseOffset: 0, // mm
+  toolsetterRadialOffsetBuffer: 0.5, // mm
+  toolsetterAxialOffsetBuffer: 0.5, // mm
 };
 
 // user-defined property definitions
 propertyDefinitions = {
-  magazineLoad: { title: "Load Tools into Magazine", description: "If enabled, the PLC expects the tool to be loaded into the magazine", type: "boolean" }
+  magazineLoad: { title: "Load Tools into Magazine", description: "If enabled, the PLC expects the tool to be loaded into the magazine", type: "boolean" },
+  spindleNoseOffset: { title: "Spindle Nose Offset", description: "Distance between the Fusion total tool length and actual spindle nose, intended to be used if you model your spindle into the toolholder for colission detection", type: "spatial" },
+  toolsetterRadialOffsetBuffer: { title: "Toolsetter Radial Offset Buffer", description: "The addidional offset inside of the tool tip radius to measure the tool at", type: "spatial" },
+  toolsetterAxialOffsetBuffer: { title: "Toolsetter Axial Offset Buffer", description: "The addidional offset above of the tool tip radius to measure the tool at", type: "spatial" }
 };
 
 var spatialFormat = createFormat({ decimals: 6 });
@@ -37,8 +43,6 @@ var otherFormat = createFormat({ decimals: 6 });
 var expanding = false;
 
 var already_recorded_tool = "b";
-
-var spindleNoseOffset = 0;
 
 function toString(value) {
   if (typeof value == "string") {
@@ -57,20 +61,57 @@ function ab(val) {
   return "a" + val + "b";
 }
 
+function calculateOffset(tool) {
+  var typ; // Heidenhain TYP enum
+  var radialOddset = 0; // radial offset for toolsetter
+  var axialOffset = 0; // axial offset for toolsetter
+  switch (tool.type) {
+    case 1: // Drill
+      typ = 1;
+      radialOddset = 0;
+      axialOffset = 0;
+      break;
+    case 5: // Straight End Mill
+      typ = 99;
+      radialOddset = (tool.diameter / 2.0) - properties.toolsetterRadialOffsetBuffer;
+      axialOffset = properties.toolsetterAxialOffsetBuffer;
+      break;
+    case 6: // Ball End Mill
+      typ = 99; // TODO: is this correct?
+      radialOddset = 0;
+      axialOffset = properties.toolsetterAxialOffsetBuffer + tool.cornerRadius;
+      break;
+    case 7: // Bull Nose End Mill
+      typ = 99; // TODO: is this correct?
+      radialOddset = (tool.diameter / 2.0) - properties.toolsetterRadialOffsetBuffer - tool.cornerRadius;
+      axialOffset = properties.toolsetterAxialOffsetBuffer + tool.cornerRadius;
+      break;
+    case 8: // Chamfer Mill
+      typ = 0; // TODO: No idea what this one might be
+      break;
+    case 15: // Tap
+      typ = 72; // There might be more codes for diffrent kinds of taps (LH, RH, single point, and ect) on the Heidenhain side and the Fusion side
+      break;
+    }
+  return { typ: typ, radialOddset: radialOddset, axialOffset: axialOffset };
+}
+
 function onSection() {
   if (already_recorded_tool.indexOf(ab(tool.toolId)) == -1) { // this is really fucking stupid but the postprocessor system has no .includes() function for arrays
     already_recorded_tool = already_recorded_tool + ab(tool.toolId);
     
+    var offset = calculateOffset(tool);
+
     writeln(";");
     writeln("* - LOAD TOOL DATA INTO TOOL.T");
     writeln("QS0 = " + tool.number + "; TOOL NUMBER");
-    writeln("QS1 = \"" + tool.description + "\"; TOOL NAME");
-    writeln("QS2 = \"" + tool.productId + "\"; DOCUMENT");
-    writeln("QS4 = \"" + (tool.overallLength - spindleNoseOffset) + "\"; LENGTH"); // subtract the spindle nose offset to get true overall length
+    writeln("QS1 = \"" + tool.description + "\"; TOOL DESCRIPTION");
+    writeln("QS2 = \"" + tool.productId + "\"; TOOL NAME");
+    writeln("QS4 = \"" + (tool.overallLength - properties.spindleNoseOffset) + "\"; LENGTH"); // subtract the spindle nose offset to get true overall length
     writeln("QS5 = \"" + (tool.diameter / 2.0) + "\"; RADIUS");
     writeln("QS6 = \"" + tool.cornerRadius + "\"; CORNER RADIUS");
     writeln("QS7 = \"" + 6000 + "\"; LIFE MAX"); // TODO: add life max
-    writeln("QS8 = \"" + 99 + "\"; TOOL TYPE"); // TODO: add tool type
+    writeln("QS8 = \"" + offset.typ + "\"; TOOL TYPE"); // TODO: add tool type
     writeln("QS9 = \"" + tool.fluteLength + "\"; LENGTH OF CUT");
     writeln("QS11 = \"" + 0.05 + "\"; LENGTH TOLERANCE");
     writeln("QS12 = \"" + 0.05 + "\"; RADIUS TOLERANCE");
@@ -84,8 +125,9 @@ function onSection() {
       writeln("QS18 = \"" + 0 + "\"; PLC VALUE");
     }
     writeln("QS19 = \"" + tool.numberOfFlutes + "\"; NUMBER OF FLUTES");
-    writeln("QS20 = \"" + 0 + "\"; MEASUREMENT RADIAL OFFSET");
-    writeln("QS21 = \"" + 0 + "\"; MEASUREMENT LENGTH OFFSET");
+    // The following are for beam break tool setters (laser) for where to probe the tool
+    writeln("QS20 = \"" + offset.radialOddset + "\"; MEASUREMENT RADIAL OFFSET");
+    writeln("QS21 = \"" + offset.axialOffset + "\"; MEASUREMENT LENGTH OFFSET");
     writeln("QS22 = \"user\"; PROGRAMMER");
     writeln("QS23 = \"Program name.h\"; NC-PGM");
     writeln(";");
