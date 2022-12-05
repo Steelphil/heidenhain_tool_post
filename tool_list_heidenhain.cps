@@ -19,8 +19,8 @@ capabilities = CAPABILITY_INTERMEDIATE;
 properties = {
   magazineLoad: true, // displays parameters
   spindleNoseOffset: spatial(0, MM),
-  toolsetterRadialOffsetBuffer: spatial(0.5, MM),
-  toolsetterAxialOffsetBuffer: spatial(0.5, MM),
+  toolsetterRadialOffsetBuffer: spatial(0.1, MM),
+  toolsetterAxialOffsetBuffer: spatial(0.1, MM),
   minTooltoSet: 0,
 };
 
@@ -33,8 +33,8 @@ propertyDefinitions = {
   minTooltoSet: { title: "Minimum Tool to Set", description: "The minimum tool for the post to try and set, starts at tool 0 by default", type: "integer" },
 };
 
-var spatialFormat = createFormat({decimals:(unit == MM ? 5 : 6)});
-var angularFormat = createFormat({ decimals: 6, scale: DEG });
+var spatialFormat = createFormat({decimals:(unit == MM ? 4 : 5)});
+var angularFormat = createFormat({ decimals: 2, scale: DEG });
 var rpmFormat = createFormat({ decimals: 6 });
 var otherFormat = createFormat({ decimals: 6 });
 
@@ -55,12 +55,22 @@ function onOpen() {
   
 }
 
+function limitAngle(angle) {
+  if (angle < 0) {
+    angle = 0;
+  }
+  if (angle > 180) {
+    angle = 180;
+  }
+  return angle;
+}
+
 function ab(val) {
   return "a" + val + "b";
 }
 
 function calculateOffset(tool) {
-  var typ; // Heidenhain TYP enum
+  var typ = 99; // Heidenhain TYP enum
   var radialOddset = 0; // radial offset for toolsetter
   var axialOffset = 0; // axial offset for toolsetter
   switch (tool.type) {
@@ -117,18 +127,18 @@ function onSection() {
     writeln("QS0 = " + tool.number + "; TOOL NUMBER");
     writeln("QS1 = \"" + tool.description + "\"; TOOL DESCRIPTION");
     writeln("QS2 = \"" + tool.productId + "\"; TOOL NAME");
-    writeln("QS4 = \"" + (tool.overallLength - properties.spindleNoseOffset) + "\"; LENGTH"); // subtract the spindle nose offset to get true overall length
-    writeln("QS5 = \"" + (tool.diameter / 2.0) + "\"; RADIUS");
-    writeln("QS6 = \"" + tool.cornerRadius + "\"; CORNER RADIUS");
-    writeln("QS7 = \"" + 6000 + "\"; LIFE MAX"); // TODO: add life max
+    writeln("QS4 = \"" + spatialFormat.format(tool.overallLength - properties.spindleNoseOffset) + "\"; LENGTH"); // subtract the spindle nose offset to get true overall length
+    writeln("QS5 = \"" + spatialFormat.format(tool.diameter / 2.0) + "\"; RADIUS");
+    writeln("QS6 = \"" + spatialFormat.format(tool.cornerRadius) + "\"; CORNER RADIUS");
+    writeln("QS7 = \"" + 1000 + "\"; LIFE MAX"); // TODO: add life max
     writeln("QS8 = \"" + offset.typ + "\"; TOOL TYPE"); // TODO: add tool type
-    writeln("QS9 = \"" + tool.fluteLength + "\"; LENGTH OF CUT");
+    writeln("QS9 = \"" + spatialFormat.format(tool.fluteLength) + "\"; LENGTH OF CUT");
     writeln("QS11 = \"" + 0.05 + "\"; LENGTH TOLERANCE");
     writeln("QS12 = \"" + 0.05 + "\"; RADIUS TOLERANCE");
     writeln("QS13 = \"" + 1 + "\"; BROKEN LENGTH TOLERANCE");
     writeln("QS14 = \"" + 0.1 + "\"; BROKEN RADIUS TOLERANCE");
-    writeln("QS16 = \"" + 0 + "\"; POINT ANGLE"); // TODO: add point angle, i assume this is drill tip angle
-    writeln("QS17 = \"" + tool.threadPitch + "\"; THREAD PITCH");
+    writeln("QS16 = \"" + angularFormat.format(toRad(limitAngle(toDeg(tool.taperAngle)))) + "\"; POINT ANGLE"); // TODO: add point angle, i assume this is drill tip angle
+    writeln("QS17 = \"" + spatialFormat.format(tool.threadPitch) + "\"; THREAD PITCH");
     if (properties.magazineLoad) { // if the user wants to load the tool into the magazine we tell the PLC to expect that
       writeln("QS18 = \"" + 1 + "\"; PLC VALUE");
     } else {
@@ -138,8 +148,6 @@ function onSection() {
     // The following are for beam break tool setters (laser) for where to probe the tool
     writeln("QS20 = \"" + offset.radialOddset + "\"; MEASUREMENT RADIAL OFFSET");
     writeln("QS21 = \"" + offset.axialOffset + "\"; MEASUREMENT LENGTH OFFSET");
-    writeln("QS22 = \"user\"; PROGRAMMER");
-    writeln("QS23 = \"Program name.h\"; NC-PGM");
     writeln(";");
     tablePath = "DATA WRITE \"\\TABLE\\TOOL\\T\\" + tool.number + "\\";
     writeln(tablePath + "NAME\" = QS1");
@@ -147,7 +155,7 @@ function onSection() {
     writeln(tablePath + "L\" = QS4");
     writeln(tablePath + "R\" = QS5");
     writeln(tablePath + "R2\" = QS6");
-    writeln(tablePath + "TIME2\" = QS7");
+    writeln(tablePath + "TIME1\" = QS7");
     writeln(tablePath + "TYP\" = QS8");
     writeln(tablePath + "LCUTS\" = QS9");
     writeln(tablePath + "LTOL\" = QS11");
