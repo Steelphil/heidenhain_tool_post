@@ -71,27 +71,27 @@ function ab(val) {
 
 function calculateOffset(tool) {
   var typ = 99; // Heidenhain TYP enum
-  var radialOddset = 0; // radial offset for toolsetter
+  var radialOffset = 0; // radial offset for toolsetter
   var axialOffset = 0; // axial offset for toolsetter
   switch (tool.type) {
     case 1: // Drill
       typ = 1;
-      radialOddset = 0;
+      radialOffset = 0;
       axialOffset = 0;
       break;
     case 5: // Straight End Mill
       typ = 0;
-      radialOddset = (tool.diameter / 2.0) - properties.toolsetterRadialOffsetBuffer;
+      radialOffset = (tool.diameter / 2.0) - properties.toolsetterRadialOffsetBuffer;
       axialOffset = properties.toolsetterAxialOffsetBuffer;
       break;
     case 6: // Ball End Mill
       typ = 22;
-      radialOddset = 0;
+      radialOffset = 0;
       axialOffset = properties.toolsetterAxialOffsetBuffer + tool.cornerRadius;
       break;
     case 7: // Bull Nose End Mill
       typ = 23;
-      radialOddset = (tool.diameter / 2.0) - properties.toolsetterRadialOffsetBuffer - tool.cornerRadius;
+      radialOffset = (tool.diameter / 2.0) - properties.toolsetterRadialOffsetBuffer - tool.cornerRadius;
       axialOffset = properties.toolsetterAxialOffsetBuffer + tool.cornerRadius;
       break;
     case 8: // Chamfer Mill
@@ -107,13 +107,13 @@ function calculateOffset(tool) {
       typ = 21;
       break;
     }
-  if ((radialOddset > (tool.diameter / 2.0)) || (radialOddset < 0.0) || (axialOffset > tool.fluteLength) || (axialOffset < 0.0)) {
+  if ((radialOffset > (tool.diameter / 2.0)) || (radialOffset < 0.0) || (axialOffset > tool.fluteLength) || (axialOffset < 0.0)) {
     var message = "Toolsetter offset is outside of the tool tip radius for tool " + tool.number + "\nNeither offser can be less than 0 or greater than the tool radius or LOC.\n";
     message += "Toolsetter radial offset buffer: " + spatialFormat.format(properties.toolsetterRadialOffsetBuffer) + "mm Tool Radius: " + spatialFormat.format(tool.diameter / 2.0) + "mm\n";
     message += "Toolsetter axial offset buffer: " + spatialFormat.format(properties.toolsetterAxialOffsetBuffer) + "mm LOC: " + spatialFormat.format(tool.fluteLength) + "mm\n";
     error(localize(message));
   }
-  return { typ: typ, radialOddset: spatialFormat.format(radialOddset), axialOffset: spatialFormat.format(axialOffset) };
+  return { typ: typ, radialOffset: spatialFormat.format(radialOffset), axialOffset: spatialFormat.format(axialOffset) };
 }
 
 function onSection() {
@@ -146,7 +146,7 @@ function onSection() {
     }
     writeln("QS19 = \"" + tool.numberOfFlutes + "\"; NUMBER OF FLUTES");
     // The following are for beam break tool setters (laser) for where to probe the tool
-    writeln("QS20 = \"" + offset.radialOddset + "\"; MEASUREMENT RADIAL OFFSET");
+    writeln("QS20 = \"" + offset.radialOffset + "\"; MEASUREMENT RADIAL OFFSET");
     writeln("QS21 = \"" + offset.axialOffset + "\"; MEASUREMENT LENGTH OFFSET");
     writeln(";");
     tablePath = "DATA WRITE \"\\TABLE\\TOOL\\T\\" + tool.number + "\\";
